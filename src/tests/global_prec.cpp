@@ -72,7 +72,7 @@ TEST_CASE("[global-prec] taskset-1") {
 	NP::Scheduling_problem<dtime_t> prob{jobs, prec};
 	NP::Analysis_options opts;
 
-	prob.num_processors = 2;
+	prob.num_processors = { 2 };
 	opts.be_naive = true;
 	auto nspace2 = NP::Global::State_space<dtime_t>::explore(prob, opts);
 
@@ -83,7 +83,7 @@ TEST_CASE("[global-prec] taskset-1") {
 
 	CHECK_FALSE(space2->is_schedulable()); // ISSUE: true
 
-	prob.num_processors = 3;
+	prob.num_processors = { 3 };
 	opts.be_naive = true;
 	auto nspace3 = NP::Global::State_space<dtime_t>::explore(prob, opts);
 
@@ -115,7 +115,7 @@ TEST_CASE("[global-prec] taskset-2") {
 	NP::Scheduling_problem<dtime_t> prob{jobs, prec};
 	NP::Analysis_options opts;
 
-	prob.num_processors = 2;
+	prob.num_processors = { 2 };
 	opts.be_naive = true;
 	auto nspace2 = NP::Global::State_space<dtime_t>::explore(prob, opts);
 
@@ -132,7 +132,7 @@ TEST_CASE("[global-prec] taskset-2") {
 		  CHECK(nspace2->get_finish_times(j).from() != 0);  // ISSUE: 0
 	}
 
-	prob.num_processors = 3;
+	prob.num_processors = { 3 };
 	opts.be_naive = true;
 	auto nspace3 = NP::Global::State_space<dtime_t>::explore(prob, opts);
 
@@ -165,7 +165,7 @@ TEST_CASE("[global-prec] taskset-3") {
 	NP::Scheduling_problem<dtime_t> prob{jobs, prec};
 	NP::Analysis_options opts;
 
-	prob.num_processors = 1;
+	prob.num_processors = { 1 };
 	opts.be_naive = false;
 	auto space = NP::Global::State_space<dtime_t>::explore(prob, opts);
 
