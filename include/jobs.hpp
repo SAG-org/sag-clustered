@@ -91,7 +91,7 @@ namespace NP {
 			unsigned long tid = 0,
 			unsigned int affinity = 0)
 			: arrival(arr), parallelism(Interval<unsigned int>{ 1, 1 }),
-			deadline(dl), priority(prio), id(id, tid), index(idx)
+			deadline(dl), priority(prio), id(id, tid), index(idx), affinity(affinity)
 		{
 			exec_time.emplace(1, cost);
 			compute_hash();
