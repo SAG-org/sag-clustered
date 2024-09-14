@@ -36,8 +36,11 @@ static std::string precedence_file;
 static bool want_aborts = false;
 static std::string aborts_file;
 
-static bool want_multiprocessor = false;
+static bool want_global = false;
 static unsigned int num_processors = 1;
+
+static bool want_partitioned = false;
+static std::string platform_file;
 
 static bool use_supernodes = true;
 
@@ -70,6 +73,7 @@ static Analysis_result analyze(
 	std::istream &in,
 	std::istream &prec_in,
 	std::istream &aborts_in,
+	std::istream& platform_in,
     bool &is_yaml)
 {
 #ifdef CONFIG_PARALLEL
@@ -81,12 +85,15 @@ static Analysis_result analyze(
     typename NP::Job<Time>::Job_set jobs = is_yaml ? NP::parse_yaml_job_file<Time>(in) : NP::parse_csv_job_file<Time>(in);
 	// Parse precedence constraints
 	std::vector<NP::Precedence_constraint<Time>> edges = is_yaml ? NP::parse_yaml_dag_file<Time>(prec_in) : NP::parse_precedence_file<Time>(prec_in);
+	std::vector<unsigned int> clusters = want_partitioned ?
+		(is_yaml ? NP::parse_yaml_platform_file(platform_in) : NP::parse_csv_platform_file(platform_in))
+		: std::vector<unsigned int>{ num_processors };
 
 	NP::Scheduling_problem<Time> problem{
         jobs,
 		edges,
 		NP::parse_abort_file<Time>(aborts_in),
-		num_processors};
+		clusters };
 
 	// Set common analysis options
 	NP::Analysis_options opts;
@@ -144,16 +151,13 @@ static Analysis_result process_stream(
 	std::istream &in,
 	std::istream &prec_in,
 	std::istream &aborts_in,
+	std::istream& platform_in,
     bool is_yaml)
 {
-	if (want_multiprocessor && want_dense)
-		return analyze<dense_t, NP::Global::State_space<dense_t>>(in, prec_in, aborts_in, is_yaml);
-	else if (want_multiprocessor && !want_dense)
-		return analyze<dtime_t, NP::Global::State_space<dtime_t>>(in, prec_in, aborts_in, is_yaml);
-	else if (want_dense)
-		return analyze<dense_t, NP::Global::State_space<dense_t>>(in, prec_in, aborts_in, is_yaml);
+	if (want_dense)
+		return analyze<dense_t, NP::Global::State_space<dense_t>>(in, prec_in, aborts_in, platform_in, is_yaml);
 	else
-		return analyze<dtime_t, NP::Global::State_space<dtime_t>>(in, prec_in, aborts_in, is_yaml);
+		return analyze<dtime_t, NP::Global::State_space<dtime_t>>(in, prec_in, aborts_in, platform_in, is_yaml);
 }
 
 static void process_file(const std::string& fname)
@@ -163,14 +167,19 @@ static void process_file(const std::string& fname)
 
 		auto empty_dag_stream = std::istringstream("\n");
 		auto empty_aborts_stream = std::istringstream("\n");
+		auto empty_platform_stream = std::istringstream("\n");
 		auto dag_stream = std::ifstream();
 		auto aborts_stream = std::ifstream();
+		auto platform_stream = std::ifstream();
 
 		if (want_precedence)
 			dag_stream.open(precedence_file);
 
 		if (want_aborts)
 			aborts_stream.open(aborts_file);
+
+		if (want_partitioned)
+			platform_stream.open(platform_file);
 
 		std::istream &dag_in = want_precedence ?
 			static_cast<std::istream&>(dag_stream) :
@@ -180,9 +189,13 @@ static void process_file(const std::string& fname)
 			static_cast<std::istream&>(aborts_stream) :
 			static_cast<std::istream&>(empty_aborts_stream);
 
+		std::istream& platform_in = want_partitioned ?
+			static_cast<std::istream&>(platform_stream) :
+			static_cast<std::istream&>(empty_platform_stream);
+
 		if (fname == "-")
 		{
-			result = process_stream(std::cin, dag_in, aborts_in, false);
+			result = process_stream(std::cin, dag_in, aborts_in, platform_in, false);
 		}
 		else {
             // check the extension of the file
@@ -193,7 +206,7 @@ static void process_file(const std::string& fname)
             }
 
 			auto in = std::ifstream(fname, std::ios::in);
-			result = process_stream(in, dag_in, aborts_in, is_yaml);
+			result = process_stream(in, dag_in, aborts_in, platform_in, is_yaml);
 
 #ifdef CONFIG_COLLECT_SCHEDULE_GRAPH
 			if (want_dot_graph) {
@@ -238,15 +251,23 @@ static void process_file(const std::string& fname)
 			std::cout << ",  " << (int) result.schedulable;
 
 		std::cout << ",  " << result.number_of_jobs
-			  << ",  " << result.number_of_nodes
-		          << ",  " << result.number_of_states
-		          << ",  " << result.number_of_edges
-		          << ",  " << result.max_width
-		          << ",  " << std::fixed << result.cpu_time
-		          << ",  " << ((double) mem_used) / (1024.0)
-		          << ",  " << (int) result.timeout
-		          << ",  " << num_processors
-		          << std::endl;
+			<< ",  " << result.number_of_nodes
+			<< ",  " << result.number_of_states
+			<< ",  " << result.number_of_edges
+			<< ",  " << result.max_width
+			<< ",  " << std::fixed << result.cpu_time
+			<< ",  " << ((double)mem_used) / (1024.0)
+			<< ",  " << (int)result.timeout;
+		if (want_partitioned)
+		{
+			std::cout << ",  clustered"
+				<< std::endl;
+		}
+		else
+		{
+			std::cout << ",  " << num_processors
+				<< std::endl;
+		}
 	} catch (std::ios_base::failure& ex) {
 		std::cerr << fname;
 		if (want_precedence)
@@ -326,8 +347,12 @@ int main(int argc, char** argv)
 	      .set_default("");
 
 	parser.add_option("-m", "--multiprocessor").dest("num_processors")
-	      .help("set the number of processors of the platform")
+	      .help("set the number of processors of the platform. Mutually exclusive with --platform.")
 	      .set_default("1");
+
+	parser.add_option("--platform").dest("platform_file")
+		.help("name of the file that contains the platform architecture. Mutually exclusive with --multiprocessor.")
+		.set_default("");
 
 	parser.add_option("--threads").dest("num_threads")
 	      .help("set the number of worker threads (parallel analysis)")
@@ -392,10 +417,17 @@ int main(int argc, char** argv)
 	}
 	aborts_file = (const std::string&) options.get("abort_file");
 
-	want_multiprocessor = options.is_set_by_user("num_processors");
+	want_global = options.is_set_by_user("num_processors");
 	num_processors = options.get("num_processors");
 	if (!num_processors || num_processors > MAX_PROCESSORS) {
 		std::cerr << "Error: invalid number of processors\n" << std::endl;
+		return 1;
+	}
+
+	want_partitioned = options.is_set_by_user("platform_file");
+	platform_file = (const std::string&)options.get("platform_file");
+	if (want_global && want_partitioned) {
+		std::cerr << "Error: options --platform and --multiprocessor are mutually exclusive.\n" << std::endl;
 		return 1;
 	}
 

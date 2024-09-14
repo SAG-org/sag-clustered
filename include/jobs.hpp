@@ -54,6 +54,7 @@ namespace NP {
 		JobID id;
 		hash_value_t key;
 		Job_index index;  // RV: index in the jobs array of the workload.
+		unsigned int affinity; // ID of the cluster on which the job is assigned
 
 		void compute_hash() {
 			auto h = std::hash<Time>{};
@@ -75,9 +76,10 @@ namespace NP {
 			Interval<Time> arr, const Cost& exec_time,
 			Time dl, Priority prio,
 			Job_index idx,
-			unsigned long tid = 0)
+			unsigned long tid = 0,
+			unsigned int affinity = 0)
 		: arrival(arr), exec_time(exec_time), parallelism(exec_time.begin()->first, exec_time.rbegin()->first),
-		  deadline(dl), priority(prio), id(id, tid), index(idx)
+		  deadline(dl), priority(prio), id(id, tid), index(idx), affinity(affinity)
 		{
 			compute_hash();
 		}
@@ -86,7 +88,8 @@ namespace NP {
 			Interval<Time> arr, Interval<Time> cost,
 			Time dl, Priority prio,
 			Job_index idx,
-			unsigned long tid = 0)
+			unsigned long tid = 0,
+			unsigned int affinity = 0)
 			: arrival(arr), parallelism(Interval<unsigned int>{ 1, 1 }),
 			deadline(dl), priority(prio), id(id, tid), index(idx)
 		{
@@ -97,6 +100,11 @@ namespace NP {
 		hash_value_t get_key() const
 		{
 			return key;
+		}
+
+		unsigned int get_affinity() const
+		{
+			return affinity;
 		}
 
 		Time earliest_arrival() const

@@ -218,6 +218,7 @@ namespace NP {
 
 		Time arr_min, arr_max, dl, prio;
 		std::map<unsigned int, Interval<Time>> cost;
+		unsigned int affinity = 0;
 
 		in.exceptions(std::istream::failbit | std::istream::badbit);
 
@@ -234,11 +235,16 @@ namespace NP {
 		in >> dl;
 		next_field(in);
 		in >> prio;
+		next_field(in);
+		if (more_fields_in_line(in))
+		{
+			in >> affinity;
+		}
 
 		in.exceptions(state_before);
 
 		return Job<Time>{jid, Interval<Time>{arr_min, arr_max},
-						cost, dl, prio, idx, tid};
+						cost, dl, prio, idx, tid, affinity};
 	}
 
 	template<class Time>
@@ -267,6 +273,7 @@ namespace NP {
 		typename Job<Time>::Job_set jobs;
         unsigned long tid, jid;
         Time arr_min, arr_max, cost_min, cost_max, dl, prio;
+		unsigned int affinity;
 		try {
 			YAML::Node input_job_set = YAML::Load(in);
 
@@ -280,15 +287,70 @@ namespace NP {
 				cost_max = j["Cost max"].as<Time>();
 				dl = j["Deadline"].as<Time>();
 				prio = j["Priority"].as<Time>();
+				if (j["Affinity"])
+					affinity = j["Affinity"].as<int>();
+				else
+					affinity = 0;
 
 				jobs.push_back(Job<Time>{jid, Interval<Time>{arr_min, arr_max},
-										 Interval<Time>{cost_min, cost_max}, dl, prio, tid});
+										 Interval<Time>{cost_min, cost_max}, dl, prio, tid, affinity});
 			}
 		} catch (const YAML::Exception& e) {
 			std::cerr << "Error reading YAML file: " << e.what() << std::endl;
 		}
 
 		return jobs;
+	}
+
+	inline unsigned int parse_cluster(std::istream& in)
+	{
+		unsigned int num_proc;
+
+		std::ios_base::iostate state_before = in.exceptions();
+
+		in.exceptions(std::istream::failbit | std::istream::badbit);
+
+		in >> num_proc;
+		in.exceptions(state_before);
+
+		return num_proc;
+	}
+
+	inline std::vector<unsigned int> parse_csv_platform_file(std::istream& in)
+	{
+		// first row contains a comment, just skip it
+		next_line(in);
+
+		std::vector<unsigned int> clusters;
+
+		while (more_data(in)) {
+			clusters.push_back(parse_cluster(in));
+			// munge any trailing whitespace or extra columns
+			next_line(in);
+		}
+
+		return clusters;
+	}
+
+	inline std::vector<unsigned int> parse_yaml_platform_file(std::istream& in)
+	{
+		std::vector<unsigned int> clusters;
+		unsigned int num_processors;
+		try {
+			YAML::Node input_platform = YAML::Load(in);
+
+			auto const p = input_platform["platform"];
+			for (auto const& c : p) {
+				num_processors = c["#N_processors"].as<unsigned int>();
+
+				clusters.push_back(num_processors);
+			}
+		}
+		catch (const YAML::Exception& e) {
+			std::cerr << "Error reading YAML file: " << e.what() << std::endl;
+		}
+
+		return clusters;
 	}
 
 	template<class Time>

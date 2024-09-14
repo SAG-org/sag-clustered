@@ -51,7 +51,7 @@ namespace NP {
 				const Problem& prob,
 				const Analysis_options& opts)
 			{
-				State_space* s = new State_space(prob.jobs, prob.prec, prob.aborts, prob.num_processors, 
+				State_space* s = new State_space(prob.jobs, prob.prec, prob.aborts, prob.num_processors[0],
 					opts.timeout, opts.max_depth, opts.early_exit, opts.use_supernodes);
 				s->be_naive = opts.be_naive;
 				s->cpu_time.start();

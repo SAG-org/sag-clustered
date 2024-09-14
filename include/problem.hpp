@@ -4,6 +4,7 @@
 #include "jobs.hpp"
 #include "precedence.hpp"
 #include "aborts.hpp"
+#include "affinity.hpp"
 
 namespace NP {
 
@@ -24,42 +25,48 @@ namespace NP {
 		Abort_actions aborts;
 
 		// ** Platform model:
-		// on how many (identical) processors are the jobs being
-		// dispatched (globally, in priority order)
-		unsigned int num_processors;
+		// Number of (identical) processors in each cluster 
+		// on which the jobs are being dispatched. 
+		// Jobs are dispatched globally (in priority order) 
+		// on each cluster but cannot migrate between clusters
+		std::vector<unsigned int> num_processors;
+
 
 		// Classic default setup: no abort actions
-		Scheduling_problem(const Workload& jobs, const Precedence_constraints& prec,
-		                   unsigned int num_processors = 1)
+		Scheduling_problem(const Workload& jobs, const Precedence_constraints& prec, 
+			const std::vector<unsigned int>& num_processors = { 1 })
 		: num_processors(num_processors)
 		, jobs(jobs)
 		, prec(prec)
 		{
-			assert(num_processors > 0);
+			assert(num_processors[0] > 0);
 			validate_prec_cstrnts<Time>(this->prec, jobs);
+			validate_affinities<Time>(jobs, num_processors.size());
 		}
 
 		// Constructor with abort actions and precedence constraints
 		Scheduling_problem(const Workload& jobs, const Precedence_constraints& prec,
 		                   const Abort_actions& aborts,
-		                   unsigned int num_processors)
+						   const std::vector<unsigned int>& num_processors = { 1 })
 		: num_processors(num_processors)
 		, jobs(jobs)
 		, prec(prec)
 		, aborts(aborts)
 		{
-			assert(num_processors > 0);
+			assert(num_processors[0] > 0);
 			validate_prec_cstrnts<Time>(this->prec, jobs);
 			validate_abort_refs<Time>(aborts, jobs);
+			validate_affinities<Time>(jobs, num_processors.size());
 		}
 
 		// Convenience constructor: no DAG, no abort actions
 		Scheduling_problem(const Workload& jobs,
-		                   unsigned int num_processors = 1)
+						   const std::vector<unsigned int>& num_processors = { 1 })
 		: jobs(jobs)
 		, num_processors(num_processors)
 		{
-			assert(num_processors > 0);
+			assert(num_processors[0] > 0);
+			validate_affinities<Time>(jobs, num_processors.size());
 		}
 	};
 
