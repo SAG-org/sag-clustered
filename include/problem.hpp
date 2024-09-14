@@ -33,40 +33,77 @@ namespace NP {
 
 
 		// Classic default setup: no abort actions
-		Scheduling_problem(const Workload& jobs, const Precedence_constraints& prec, 
-			const std::vector<unsigned int>& num_processors = { 1 })
-		: num_processors(num_processors)
-		, jobs(jobs)
-		, prec(prec)
+		Scheduling_problem(const Workload& jobs, const Precedence_constraints& prec,
+			const std::vector<unsigned int>& num_processors)
+			: num_processors(num_processors)
+			, jobs(jobs)
+			, prec(prec)
 		{
-			assert(num_processors[0] > 0);
+			assert(num_processors.size() > 0);
 			validate_prec_cstrnts<Time>(this->prec, jobs);
 			validate_affinities<Time>(jobs, num_processors.size());
+		}
+
+		// Classic default setup: no abort actions
+		Scheduling_problem(const Workload& jobs, const Precedence_constraints& prec,
+			unsigned int num_processors = 1)
+			: num_processors({num_processors})
+			, jobs(jobs)
+			, prec(prec)
+		{
+			assert(num_processors > 0);
+			validate_prec_cstrnts<Time>(this->prec, jobs);
+			validate_affinities<Time>(jobs, 1);
 		}
 
 		// Constructor with abort actions and precedence constraints
 		Scheduling_problem(const Workload& jobs, const Precedence_constraints& prec,
 		                   const Abort_actions& aborts,
-						   const std::vector<unsigned int>& num_processors = { 1 })
+						   const std::vector<unsigned int>& num_processors)
 		: num_processors(num_processors)
 		, jobs(jobs)
 		, prec(prec)
 		, aborts(aborts)
 		{
-			assert(num_processors[0] > 0);
+			assert(num_processors.size() > 0);
 			validate_prec_cstrnts<Time>(this->prec, jobs);
 			validate_abort_refs<Time>(aborts, jobs);
 			validate_affinities<Time>(jobs, num_processors.size());
 		}
 
+		// Constructor with abort actions and precedence constraints
+		Scheduling_problem(const Workload& jobs, const Precedence_constraints& prec,
+			const Abort_actions& aborts,
+			unsigned int num_processors = 1)
+			: num_processors({ num_processors })
+			, jobs(jobs)
+			, prec(prec)
+			, aborts(aborts)
+		{
+			assert(num_processors > 0);
+			validate_prec_cstrnts<Time>(this->prec, jobs);
+			validate_abort_refs<Time>(aborts, jobs);
+			validate_affinities<Time>(jobs, 1);
+		}
+
 		// Convenience constructor: no DAG, no abort actions
 		Scheduling_problem(const Workload& jobs,
-						   const std::vector<unsigned int>& num_processors = { 1 })
+						   const std::vector<unsigned int>& num_processors)
 		: jobs(jobs)
 		, num_processors(num_processors)
 		{
-			assert(num_processors[0] > 0);
+			assert(num_processors.size() > 0);
 			validate_affinities<Time>(jobs, num_processors.size());
+		}
+
+		// Convenience constructor: no DAG, no abort actions
+		Scheduling_problem(const Workload& jobs,
+			unsigned int num_processors = 1)
+			: jobs(jobs)
+			, num_processors({ num_processors })
+		{
+			assert(num_processors > 0);
+			validate_affinities<Time>(jobs, 1);
 		}
 	};
 
