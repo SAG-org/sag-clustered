@@ -63,9 +63,9 @@ namespace NP {
 			key = (key << 4) ^ h(arrival.from());
 			key = (key << 4) ^ h(id.task);
 			key = (key << 4) ^ h(arrival.until());
-			key = (key << 4) ^ h(exec_time[0].from());
+			key = (key << 4) ^ h(exec_time.begin()->second.from());
 			key = (key << 4) ^ h(deadline);
-			key = (key << 4) ^ h(exec_time[0].upto());
+			key = (key << 4) ^ h(exec_time.begin()->second.upto());
 			key = (key << 4) ^ h(id.job);
 			key = (key << 4) ^ h(priority);
 		}
