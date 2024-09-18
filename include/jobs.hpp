@@ -152,7 +152,7 @@ namespace NP {
 				return cost->second;
 		}
 
-		int get_next_parallelism(unsigned int ncores) const
+		int get_next_higher_parallelism(unsigned int ncores) const
 		{
 			assert(ncores < parallelism.max());
 			auto it = exec_time.upper_bound(ncores);
@@ -161,6 +161,17 @@ namespace NP {
 			else
 				return it->first;
 
+		}
+
+		int get_next_lower_parallelism(unsigned int ncores) const
+		{
+			auto it = exec_time.lower_bound(ncores);
+			if (it == exec_time.begin())
+				return -1;
+			else if (it == exec_time.end())
+				return parallelism.max();
+			else
+				return (--it)->first;
 		}
 
 		Priority get_priority() const

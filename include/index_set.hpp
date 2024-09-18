@@ -20,6 +20,15 @@ namespace NP {
 				set_bit(idx, true);
 			}
 
+			// derive a new set by "cloning" an existing set and adding a set of indices
+			Index_set(const Index_set& from, const std::vector<std::size_t>& idx)
+				: the_set(std::max(from.the_set.size(), (*std::max_element(idx.begin(), idx.end()) / 64) + 1))
+			{
+				std::copy(from.the_set.begin(), from.the_set.end(), the_set.begin());
+				for(auto i : idx)
+					set_bit(i, true);
+			}
+
 			// create the diff of two job sets (intended for debugging only)
 			Index_set(const Index_set &a, const Index_set &b)
 					: the_set(std::max(a.the_set.size(), b.the_set.size()), 0)
