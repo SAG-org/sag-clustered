@@ -127,15 +127,11 @@ namespace NP {
 		// baseline).
 		bool be_naive;
 
-		// If using supernodes
-		bool use_supernodes;
-
 		Analysis_options()
 		: timeout(0)
 		, max_depth(0)
 		, early_exit(true)
 		, be_naive(false)
-		, use_supernodes(true)
 		{
 		}
 	};

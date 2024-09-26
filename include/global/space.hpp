@@ -26,10 +26,6 @@
 
 #include "global/node.hpp"
 
-#define NOSUSP 0
-#define GENERAL_SUSP 1
-#define PATHWISE_SUSP 2
-
 namespace NP {
 
 	namespace Global {
@@ -53,7 +49,7 @@ namespace NP {
 				const Analysis_options& opts)
 			{
 				State_space* s = new State_space(prob.jobs, prob.prec, prob.aborts, prob.num_processors,
-					opts.timeout, opts.max_depth, opts.early_exit, opts.use_supernodes);
+					opts.timeout, opts.max_depth, opts.early_exit);
 				s->be_naive = opts.be_naive;
 				s->cpu_time.start();
 				s->explore();
@@ -333,7 +329,6 @@ namespace NP {
 			const double timeout;
 			const unsigned int num_clusters;
 			const std::vector<unsigned int> num_cpus;
-			bool use_supernodes = true;
 
 			State_space(const Workload& jobs,
 				const Precedence_constraints& edges,
@@ -341,8 +336,7 @@ namespace NP {
 				const std::vector<unsigned int>& num_cpus,
 				double max_cpu_time = 0,
 				unsigned int max_depth = 0,
-				bool early_exit = true,
-				bool use_supernodes = true)
+				bool early_exit = true)
 				: jobs(jobs)
 				, aborted(false)
 				, timed_out(false)
@@ -376,7 +370,6 @@ namespace NP {
 				, successors(_successors)
 				, early_exit(early_exit)
 				, abort_actions(jobs.size(), NULL)
-				, use_supernodes(use_supernodes)
 #ifdef CONFIG_COLLECT_SCHEDULE_GRAPH
 				, nodes_storage(jobs.size() + 1)
 #else
@@ -1172,83 +1165,6 @@ namespace NP {
 				}
 			}
 
-			// Create a new state st, try to merge st in an existing node. If the merge is unsuccessful, create a new node and add st
-			/*Node& dispatch_wo_supernodes(const Node& n, const State& s, const Job<Time>& j,
-				const Interval<Time> start_times, const Interval<Time> finish_times, const unsigned int ncores)
-			{
-				// update the set of scheduled jobs
-				Dispatched_job_set sched_jobs{ n.get_scheduled_jobs(), j.get_job_index() };
-
-				// create a new state resulting from scheduling j in state s.
-				State& st = new_state(s, j, predecessors_of(j),
-					start_times, finish_times, sched_jobs, successors, predecessors_suspensions, earliest_certain_gang_source_job_disptach(n, s, j), ncores);
-
-				bool found_match = false;
-				auto key = n.next_key(j);
-#ifdef CONFIG_PARALLEL
-				Nodes_map_accessor acc;
-				while (true)
-				{
-					// check if key exists
-					if (nodes_by_key.find(acc, key))
-					{
-						for (Node_ref other : acc->second)
-						{
-							if (other->get_scheduled_jobs() != sched_jobs)
-								continue;
-
-							// If we have reached here, it means that we have found an existing node with the same 
-							// set of scheduled jobs than the new state resuting from scheduling job j in system state s.
-							// Thus, our new state can be added to that existing node.
-							if (other->merge_states(st, false))
-							{
-								delete& st;
-								return *other;
-							}
-						}
-					}
-					else if (nodes_by_key.insert(acc, key))
-						break;
-
-					// if we raced with concurrent creation, try again
-				}
-
-				// if we reached here, we could not merge with an existing state and we have the lock on the hash map
-				Node& next_node = new_node_at(acc, n, j, j.get_job_index(),
-					earliest_possible_job_release(n, j),
-					earliest_certain_source_job_release(n, j),
-					earliest_certain_sequential_source_job_release(n, j));
-#else
-				const auto pair_it = nodes_by_key.find(key);
-				if (pair_it != nodes_by_key.end())
-				{
-					for (Node_ref other : pair_it->second)
-					{
-						if (other->get_scheduled_jobs() != sched_jobs)
-							continue;
-
-						// If we have reached here, it means that we have found an existing node with the same 
-						// set of scheduled jobs than the new state resuting from scheduling job j in system state s.
-						// Thus, our new state can be added to that existing node.
-						if (other->merge_states(st, false))
-						{
-							delete& st;
-							return *other;
-						}
-					}
-				}
-
-				Node& next_node = new_node(1, n, j, j.get_job_index(),
-					earliest_possible_job_release(n, j),
-					earliest_certain_source_job_release(n, j),
-					earliest_certain_sequential_source_job_release(n, j));
-#endif
-
-				next_node.add_state(&st);
-				num_states++;
-				return next_node;
-			}*/
-
 			bool explore_state(const Node& n, const Job<Time>* j, Time t_wc_wos, Time t_high_wos)
 			{
 				DM("--- global:dispatch() " << n << ", " << j << ", " << t_wc_wos << ", " << t_high_wos << std::endl);
@@ -1270,9 +1186,7 @@ namespace NP {
 				std::vector<Time> next_job_rel(num_clusters), next_source_job_rel(num_clusters), next_seq_source_job_rel(num_clusters);
 				for (int i = 0; i < num_clusters; i++) {
 					Job_ref j = j_set[i];
-					if (j == NULL)
-						j_set_idx.push_back(NULL_JOB_INDEX);
-					else {
+					if (j != NULL) {
 						j_set_idx.push_back(j->get_job_index());
 						next_job_rel[i] = earliest_possible_job_release(n, *j_set[i]);
 						next_source_job_rel[i] = earliest_certain_source_job_release(n, *j_set[i]);

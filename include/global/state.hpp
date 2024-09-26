@@ -38,6 +38,17 @@ namespace NP {
 
 		public:
 			// initial state -- nothing yet has finished, nothing is running
+			Schedule_state(const std::vector<unsigned int>& num_cpus)
+			{
+				assert(num_cpus.size() > 0);
+				clusters.reserve(num_cpus.size());
+				for (int i = 0; i < num_cpus.size(); i++)
+				{
+					clusters.emplace_back(num_cpus[i], Time_model::constants<Time>::infinity());
+				}
+			}
+
+			// initial state -- nothing yet has finished, nothing is running
 			Schedule_state(const std::vector<unsigned int>& num_cpus, const std::vector<Time>& next_certain_gang_job_release)
 			{
 				assert(num_cpus.size() > 0);
