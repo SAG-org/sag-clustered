@@ -15,6 +15,7 @@ namespace NP {
 
 	typedef std::size_t hash_value_t;
 	typedef std::size_t Job_index;
+	#define NULL_JOB_INDEX -1
 
 	struct JobID {
 		unsigned long job;
