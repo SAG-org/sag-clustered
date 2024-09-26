@@ -41,16 +41,6 @@ namespace NP {
 			Schedule_node(const Schedule_node& origin) = delete;
 
 			typedef Schedule_state<Time> State;
-
-			/*struct eft_compare
-			{
-				bool operator() (State* x, State* y) const
-				{
-					return x->earliest_finish_time() < y->earliest_finish_time();
-				}
-			};
-
-			typedef typename std::multiset<State*, eft_compare> State_ref_queue;*/
 			typedef std::deque<State*> State_ref_queue;
 			State_ref_queue states;
 
@@ -66,41 +56,6 @@ namespace NP {
 				, earliest_pending_release(num_cores.size(), 0)
 				, next_certain_successor_jobs_disptach(num_cores.size(), Time_model::constants<Time>::infinity())
 				, next_certain_source_job_release(num_cores.size(), Time_model::constants<Time>::infinity())
-				, next_certain_sequential_source_job_release(num_cores.size(), Time_model::constants<Time>::infinity())
-				, next_certain_gang_source_job_disptach(num_cores.size(), Time_model::constants<Time>::infinity())
-			{
-			}
-
-			Schedule_node(
-				const std::vector<unsigned int>& num_cores,
-				const std::vector<Time>& next_earliest_release
-			)
-				: lookup_key{ 0 }
-				, num_cpus(num_cores)
-				, finish_time{ 0,0 }
-				, latest_core_availability(num_cores.size(), 0)
-				, num_jobs_scheduled(0)
-				, earliest_pending_release{ next_earliest_release }
-				, next_certain_successor_jobs_disptach(num_cores.size(), Time_model::constants<Time>::infinity())
-				, next_certain_source_job_release(num_cores.size(), Time_model::constants<Time>::infinity())
-				, next_certain_sequential_source_job_release(num_cores.size(), Time_model::constants<Time>::infinity())
-				, next_certain_gang_source_job_disptach(num_cores.size(), Time_model::constants<Time>::infinity())
-			{
-			}
-
-			Schedule_node(
-				const std::vector<unsigned int>& num_cores,
-				const std::vector<Time>& next_earliest_release,
-				const std::vector<Time>& next_certain_source_job_release // the next time a job without predecessor is certainly released
-			)
-				: lookup_key{ 0 }
-				, num_cpus(num_cores)
-				, finish_time{ 0,0 }
-				, latest_core_availability(num_cores.size(), 0)
-				, num_jobs_scheduled(0)
-				, earliest_pending_release{ next_earliest_release }
-				, next_certain_successor_jobs_disptach(num_cores.size(), Time_model::constants<Time>::infinity())
-				, next_certain_source_job_release{ next_certain_source_job_release }
 				, next_certain_sequential_source_job_release(num_cores.size(), Time_model::constants<Time>::infinity())
 				, next_certain_gang_source_job_disptach(num_cores.size(), Time_model::constants<Time>::infinity())
 			{
@@ -322,18 +277,6 @@ namespace NP {
 			{
 				return states.size();
 			}
-
-			/*const State* get_first_state() const
-			{
-				auto first = states.begin();
-				return *first;
-			}
-
-			const State* get_last_state() const
-			{
-				auto last = --(states.end());
-				return *last;
-			}*/
 
 			const State_ref_queue* get_states() const
 			{
