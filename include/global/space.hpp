@@ -24,7 +24,7 @@
 #include "problem.hpp"
 #include "clock.hpp"
 
-#include "global/state.hpp"
+#include "global/node.hpp"
 
 #define NOSUSP 0
 #define GENERAL_SUSP 1
