@@ -742,10 +742,12 @@ namespace NP {
 					if (contains(disregard, pred_idx))
 						continue;
 
-					// if there is no suspension time and there is a single core, then
+					// if the predecessor and the job j arre assigned on the same cluster and
+					// there is no suspension time and there is a single core in the cluster, then
 					// predecessors are finished as soon as the processor becomes available
 					auto pred_susp = pred.second;
-					if (num_cpus[affinity] == 1 && pred_susp.max() == 0)
+					unsigned int aff_pred = pred.first->get_affinity();
+					if (aff_pred == affinity && num_cpus[affinity] == 1 && pred_susp.max() == 0)
 					{
 						r.lower_bound(avail_min);
 						r.extend_to(avail_min);
@@ -1193,6 +1195,11 @@ namespace NP {
 						next_seq_source_job_rel[i] = earliest_certain_sequential_source_job_release(n, *j_set[i]);
 						n_jobs_dispatched++;
 					}
+					else {
+						next_job_rel[i] = n.earliest_job_release(i);
+						next_source_job_rel[i] = n.get_next_certain_source_job_release(i);
+						next_seq_source_job_rel[i] = n.get_next_certain_sequential_source_job_release(i);
+					}
 				}
 
 				// All states in node 'n' for which the job 'j' is eligible will 
@@ -1276,6 +1283,7 @@ namespace NP {
 					for (const auto j : j_set) {
 						if (j == NULL)
 							continue;
+						
 						unsigned int affinity = j->get_affinity();
 						next_certain_gang_source_job_disptach[affinity] = earliest_certain_gang_source_job_disptach(n, *s, *j);
 						const auto& cs = s->cluster(affinity);

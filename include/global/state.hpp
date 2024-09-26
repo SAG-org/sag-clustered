@@ -26,8 +26,9 @@ namespace NP {
 
 		template<class Time> class Schedule_state
 		{
-			typedef std::vector<std::pair<Job_index, Interval<Time>>> JobFinishTimes;
-			typedef std::vector<std::pair<const Job<Time>*, Interval<Time>>> Susp_list;
+			typedef const Job<Time>* Job_ref;
+			typedef std::vector<std::pair<Job_ref, Interval<Time>>> JobFinishTimes;
+			typedef std::vector<std::pair<Job_ref, Interval<Time>>> Susp_list;
 			typedef std::vector<Susp_list> Successors;
 			typedef std::vector<Susp_list> Predecessors;
 
@@ -135,7 +136,7 @@ namespace NP {
 			bool get_finish_times(Job_index j, Interval<Time>& ftimes) const
 			{
 				int offset = jft_find(j);
-				if (offset < job_finish_times.size() && job_finish_times[offset].first == j)
+				if (offset < job_finish_times.size() && job_finish_times[offset].first->get_job_index() == j)
 				{
 					ftimes = job_finish_times[offset].second;
 					return true;
@@ -205,13 +206,14 @@ namespace NP {
 					std::vector<Time> earliest_certain_successor_job_disptach(clusters.size(), Time_model::constants<Time>::infinity());
 					for (const auto& ft : job_finish_times)
 					{
-						auto job = ft.first;
+						auto job_ref = ft.first;
+						auto job = job_ref->get_job_index();
 						auto job_eft = ft.second.min();
 						auto job_lft = ft.second.max();
 						// if there is a single core, then we know that 
 						// jobs that were disptached in the past cannot have 
 						// finished later than when our new job starts executing
-						if (clusters[affinity].num_cpus() == 1)
+						if (job_ref->get_affinity() == affinity && clusters[affinity].num_cpus() == 1)
 						{
 							if (job_lft > lst)
 								job_lft = lst;
@@ -223,7 +225,7 @@ namespace NP {
 							for (const auto& succ : successors_of[j_idx])
 							{
 								successor_pending = true;
-								Time avail = clusters[affinity].core_availability(succ.first->get_min_parallelism()).max();
+								Time avail = clusters[succ.first->get_affinity()].core_availability(succ.first->get_min_parallelism()).max();
 								Time ready_time = std::max(avail, succ.first->latest_arrival());
 								bool ready = true;
 								for (const auto& pred : predecessors_of[succ.first->get_job_index()])
@@ -253,7 +255,7 @@ namespace NP {
 								}
 							}
 							if (successor_pending)
-								job_finish_times_temp.emplace_back(j_idx, finish_times[affinity]);
+								job_finish_times_temp.emplace_back(j, finish_times[affinity]);
 							added_j = true;
 						}
 
@@ -263,7 +265,7 @@ namespace NP {
 							if (!scheduled_jobs.contains(to_job))
 							{
 								successor_pending = true;
-								Time avail = clusters[affinity].core_availability(succ.first->get_min_parallelism()).max();
+								Time avail = clusters[succ.first->get_affinity()].core_availability(succ.first->get_min_parallelism()).max();
 								Time ready_time = std::max(avail, succ.first->latest_arrival());
 								bool ready = true;
 								for (const auto& pred : predecessors_of[to_job])
@@ -289,7 +291,7 @@ namespace NP {
 							}
 						}
 						if (successor_pending)
-							job_finish_times_temp.emplace_back(job, std::make_pair(job_eft, job_lft));
+							job_finish_times_temp.emplace_back(job_ref, Interval<Time>(job_eft, job_lft));
 					}
 
 					if (!added_j)
@@ -298,7 +300,7 @@ namespace NP {
 						for (const auto& succ : successors_of[j_idx])
 						{
 							successor_pending = true;
-							Time avail = clusters[affinity].core_availability(succ.first->get_min_parallelism()).max();
+							Time avail = clusters[succ.first->get_affinity()].core_availability(succ.first->get_min_parallelism()).max();
 							Time ready_time = std::max(avail, succ.first->latest_arrival());
 							bool ready = true;
 							for (const auto& pred : predecessors_of[succ.first->get_job_index()])
@@ -328,7 +330,7 @@ namespace NP {
 							}
 						}
 						if (successor_pending)
-							job_finish_times_temp.emplace_back(j_idx, finish_times[affinity]);
+							job_finish_times_temp.emplace_back(j, finish_times[affinity]);
 					}
 					job_finish_times.swap(job_finish_times_temp);
 
@@ -358,13 +360,14 @@ namespace NP {
 				std::vector<Time> earliest_certain_successor_job_disptach (clusters.size(), Time_model::constants<Time>::infinity());
 				for (const auto& ft : from.job_finish_times)
 				{
-					auto job = ft.first;
+					auto job_ref = ft.first;
+					auto job = job_ref->get_job_index();
 					auto job_eft = ft.second.min();
 					auto job_lft = ft.second.max();
 					// if there is a single core, then we know that 
 					// jobs that were disptached in the past cannot have 
 					// finished later than when our new job starts executing
-					if (clusters[affinity].num_cpus() == 1)
+					if (job_ref->get_affinity() == affinity && clusters[affinity].num_cpus() == 1)
 					{
 						if (job_lft > lst)
 							job_lft = lst;
@@ -376,7 +379,7 @@ namespace NP {
 						for (const auto& succ : successors_of[j_idx])
 						{
 							successor_pending = true;
-							Time avail = clusters[affinity].core_availability(succ.first->get_min_parallelism()).max();
+							Time avail = clusters[succ.first->get_affinity()].core_availability(succ.first->get_min_parallelism()).max();
 							Time ready_time = std::max(avail, succ.first->latest_arrival());
 							bool ready = true;
 							for (const auto& pred : predecessors_of[succ.first->get_job_index()])
@@ -406,7 +409,7 @@ namespace NP {
 							}
 						}
 						if (successor_pending)
-							job_finish_times.push_back(std::make_pair(j_idx, finish_times));
+							job_finish_times.emplace_back(&j, finish_times);
 						added_j = true;
 					}
 
@@ -416,7 +419,7 @@ namespace NP {
 						if (!scheduled_jobs.contains(to_job))
 						{
 							successor_pending = true;
-							Time avail = clusters[affinity].core_availability(succ.first->get_min_parallelism()).max();
+							Time avail = clusters[succ.first->get_affinity()].core_availability(succ.first->get_min_parallelism()).max();
 							Time ready_time = std::max(avail, succ.first->latest_arrival());
 							bool ready = true;
 							for (const auto& pred : predecessors_of[to_job])
@@ -442,7 +445,7 @@ namespace NP {
 						}
 					}
 					if (successor_pending)
-						job_finish_times.push_back(std::make_pair(job, std::make_pair(job_eft, job_lft)));
+						job_finish_times.emplace_back(job_ref, Interval<Time>(job_eft, job_lft));
 				}
 
 				if (!added_j)
@@ -451,7 +454,7 @@ namespace NP {
 					for (const auto& succ : successors_of[j_idx])
 					{
 						successor_pending = true;
-						Time avail = clusters[affinity].core_availability(succ.first->get_min_parallelism()).max();
+						Time avail = clusters[succ.first->get_affinity()].core_availability(succ.first->get_min_parallelism()).max();
 						Time ready_time = std::max(avail, succ.first->latest_arrival());
 						bool ready = true;
 						for (const auto& pred : predecessors_of[succ.first->get_job_index()])
@@ -481,7 +484,7 @@ namespace NP {
 						}
 					}
 					if (successor_pending)
-						job_finish_times.push_back(std::make_pair(j_idx, finish_times));
+						job_finish_times.emplace_back(&j, finish_times);
 				}
 				// update earliest successor job ready times on each cluster
 				for (int i=0; i<clusters.size(); i++)
@@ -546,9 +549,9 @@ namespace NP {
 				int end = job_finish_times.size();
 				while (start < end) {
 					int mid = (start + end) / 2;
-					if (job_finish_times[mid].first == j)
+					if (job_finish_times[mid].first->get_job_index() == j)
 						return mid;
-					else if (job_finish_times[mid].first < j)
+					else if (job_finish_times[mid].first->get_job_index() < j)
 						start = mid + 1;  // mid is too small, mid+1 might fit.
 					else
 						end = mid;

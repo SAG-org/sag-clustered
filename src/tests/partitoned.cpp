@@ -211,7 +211,7 @@ const std::string part_dependent_jobs_file =
 "1, 1, 0, 0, 2, 4, 25, 1, 0\n"
 "1, 2, 0, 0, 1, 10, 25, 3, 0\n"
 "1, 3, 0, 0, 1, 7, 25, 2, 0\n"
-"2, 1, 0, 0, 2, 3, 20, 2, 1\n"
+"2, 1, 0, 0, 3, 3, 20, 2, 1\n"
 "2, 2, 6, 6, 1, 1, 20, 1, 1\n";
 
 const std::string part_prec_file =
@@ -236,16 +236,16 @@ TEST_CASE("[partitioned] partitioned with prec constraints") {
 
 	CHECK(space->is_schedulable());
 
-	CHECK(space->number_of_nodes() == 4);
-	CHECK(space->number_of_states() == 4);
+	CHECK(space->number_of_nodes() == 5);
+	CHECK(space->number_of_states() == 5);
 
 	CHECK(space->get_finish_times(jobs[0]).min() == 2);
 	CHECK(space->get_finish_times(jobs[0]).max() == 4);
 	CHECK(space->get_finish_times(jobs[1]).min() == 3);
 	CHECK(space->get_finish_times(jobs[1]).max() == 14);
-	CHECK(space->get_finish_times(jobs[2]).min() == 5);
+	CHECK(space->get_finish_times(jobs[2]).min() == 6);
 	CHECK(space->get_finish_times(jobs[2]).max() == 21);
-	CHECK(space->get_finish_times(jobs[3]).min() == 4);
+	CHECK(space->get_finish_times(jobs[3]).min() == 5);
 	CHECK(space->get_finish_times(jobs[3]).max() == 7);
 	CHECK(space->get_finish_times(jobs[4]).min() == 7);
 	CHECK(space->get_finish_times(jobs[4]).max() == 8);

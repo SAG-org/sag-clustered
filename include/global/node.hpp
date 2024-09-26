@@ -195,7 +195,7 @@ namespace NP {
 					// was not dispatched yet, 
 					// and may possibly finish before something must start on the same cluster as j
 					if (aff_pred != aff
-						&& latest_start >= finish_time[aff_pred].min() + jobs[p].least_exec_time(jobs[p].get_max_parallelism())
+						&& latest_start >= std::max(jobs[p].earliest_arrival(), finish_time[aff_pred].min()) + jobs[p].least_exec_time(jobs[p].get_max_parallelism())
 						&& !scheduled_jobs.contains(p))
 					{
 						return true;

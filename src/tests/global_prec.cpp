@@ -76,27 +76,27 @@ TEST_CASE("[global-prec] taskset-1") {
 	opts.be_naive = true;
 	auto nspace2 = NP::Global::State_space<dtime_t>::explore(prob, opts);
 
-	CHECK_FALSE(nspace2->is_schedulable()); // ISSUE: true
+	CHECK_FALSE(nspace2->is_schedulable());
 
 	opts.be_naive = false;
 	auto space2 = NP::Global::State_space<dtime_t>::explore(prob, opts);
 
-	CHECK_FALSE(space2->is_schedulable()); // ISSUE: true
+	CHECK_FALSE(space2->is_schedulable());
 
 	prob.num_processors = { 3 };
 	opts.be_naive = true;
 	auto nspace3 = NP::Global::State_space<dtime_t>::explore(prob, opts);
 
-	CHECK(nspace3->is_schedulable());  // ISSUE: false
+	CHECK(nspace3->is_schedulable()); 
 
 	opts.be_naive = false;
 	auto space3 = NP::Global::State_space<dtime_t>::explore(prob, opts);
 
-	CHECK(space3->is_schedulable()); // ISSUE: false
+	CHECK(space3->is_schedulable());
 
 	for (const NP::Job<dtime_t>& j : jobs) {
 		CHECK(nspace3->get_finish_times(j) == space3->get_finish_times(j));
-		CHECK(nspace3->get_finish_times(j).from() != 0);  // ISSUE: 0
+		CHECK(nspace3->get_finish_times(j).from() != 0);
 	}
 
 	delete nspace2;
@@ -119,34 +119,34 @@ TEST_CASE("[global-prec] taskset-2") {
 	opts.be_naive = true;
 	auto nspace2 = NP::Global::State_space<dtime_t>::explore(prob, opts);
 
-	CHECK(nspace2->is_schedulable()); // ISSUE: false
+	CHECK(nspace2->is_schedulable());
 
 	opts.be_naive = false;
 	auto space2 = NP::Global::State_space<dtime_t>::explore(prob, opts);
 
-	CHECK(space2->is_schedulable()); // ISSUE: false
+	CHECK(space2->is_schedulable());
 
 	for (const NP::Job<dtime_t>& j : jobs) {
 		CHECK(nspace2->get_finish_times(j) == space2->get_finish_times(j));
 		if (j.least_exec_time() != 0)
-		  CHECK(nspace2->get_finish_times(j).from() != 0);  // ISSUE: 0
+		  CHECK(nspace2->get_finish_times(j).from() != 0);
 	}
 
 	prob.num_processors = { 3 };
 	opts.be_naive = true;
 	auto nspace3 = NP::Global::State_space<dtime_t>::explore(prob, opts);
 
-	CHECK(nspace3->is_schedulable());  // ISSUE: false
+	CHECK(nspace3->is_schedulable());
 
 	opts.be_naive = false;
 	auto space3 = NP::Global::State_space<dtime_t>::explore(prob, opts);
 
-	CHECK(space3->is_schedulable());  // ISSUE: false
+	CHECK(space3->is_schedulable());
 
 	for (const NP::Job<dtime_t>& j : jobs) {
 		CHECK(nspace3->get_finish_times(j) == space3->get_finish_times(j));
 		if (j.least_exec_time() != 0)
-		  CHECK(nspace3->get_finish_times(j).from() != 0);  // ISSUE: 0
+		  CHECK(nspace3->get_finish_times(j).from() != 0);
 	}
 
 	delete nspace2;
