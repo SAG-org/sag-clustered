@@ -1278,8 +1278,10 @@ namespace NP {
 							Time next_certain_gang_source_job_disptach = earliest_certain_gang_source_job_disptach(n, *s, *j);
 
 							// check for all possible parallelism levels of the moldable gang job j (if j is not gang or not moldable than min_paralellism = max_parallelism).
-							for (unsigned int p = j->get_max_parallelism(); p >= j->get_min_parallelism(); p--)
+							const auto& costs = j->get_all_costs();
+							for (auto it = costs.rbegin(); it != costs.rend(); it++)
 							{
+								unsigned int p = it->first;
 								// Calculate t_wc and t_high
 								Time t_wc = std::max(cs.core_availability(p).max(), next_certain_job_ready_time(n, *s, affinity));
 
@@ -1292,7 +1294,7 @@ namespace NP {
 								// there isn't ncores+k cores available
 								Time t_avail = Time_model::constants<Time>::infinity();
 								if (p < j->get_max_parallelism())
-									t_avail = cs.core_availability(j->get_next_higher_parallelism(p)).max();
+									t_avail = cs.core_availability(std::prev(it)->first).max();
 
 								DM("=== t_high = " << t_high << ", t_wc = " << t_wc << std::endl);
 								auto _st = start_times(*s, *j, t_wc, t_high, t_avail, p);
@@ -1301,7 +1303,7 @@ namespace NP {
 
 								//calculate the job finish time interval
 								Interval<Time> ftimes;
-								auto exec_time = j->get_cost(p);
+								auto exec_time = it->second; // j->get_cost(p);
 								Time eft = _st.first + exec_time.min();
 								Time lft = _st.second + exec_time.max();
 

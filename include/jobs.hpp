@@ -160,7 +160,7 @@ namespace NP {
 			return exec_time;
 		}
 
-		int get_next_parallelism(unsigned int ncores) const
+		int get_next_higher_parallelism(unsigned int ncores) const
 		{
 			assert(ncores < parallelism.max());
 			auto it = exec_time.upper_bound(ncores);
