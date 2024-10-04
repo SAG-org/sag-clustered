@@ -210,7 +210,8 @@ namespace NP {
 		return edges;
 	}
 
-	template<class Time> Job<Time> parse_job(std::istream& in, std::size_t idx)
+	template<class Time> 
+	Job<Time> parse_job(std::istream& in, std::size_t idx)
 	{
 		unsigned long tid, jid;
 
@@ -243,7 +244,7 @@ namespace NP {
 
 		in.exceptions(state_before);
 
-		return Job<Time>{jid, Interval<Time>{arr_min, arr_max},
+		return Job<Time> {jid, Interval<Time>{arr_min, arr_max},
 						cost, dl, prio, idx, tid, affinity};
 	}
 

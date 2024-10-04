@@ -72,7 +72,7 @@ namespace NP {
 	                         const typename Job<Time>::Job_set jobs)
 	{
 		for (const auto& action : aborts) {
-			auto job = lookup<Time>(jobs, action.get_id());
+			const auto& job = lookup<Time>(jobs, action.get_id());
 			if (action.earliest_trigger_time() < job.earliest_arrival() ||
 			    action.latest_trigger_time() < job.latest_arrival())
 				throw InvalidAbortParameter(action.get_id());

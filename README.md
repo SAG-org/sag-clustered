@@ -1,9 +1,10 @@
 # NP Schedulability Test
 
-This repository contains the implementations of schedulability tests for **sets of non-preemptive jobs** with **precedence constraints** and **self-suspension delays** scheduled on either **uniprocessor** or **globally scheduled identical multiprocessors**. The analyses are described in the following papers:
+This repository contains the implementations of schedulability tests for **sets of non-preemptive moldable gang jobs** with **precedence constraints** and **self-suspension delays** scheduled on either **uniprocessor** or **globally scheduled identical multiprocessors**. The analyses are described in the following papers:
 
 - M. Nasri and B. Brandenburg, “[An Exact and Sustainable Analysis of Non-Preemptive Scheduling](https://people.mpi-sws.org/~bbb/papers/pdf/rtss17.pdf)”, *Proceedings of the 38th IEEE Real-Time Systems Symposium (RTSS 2017)*, pp. 12–23, December 2017.
 - M. Nasri, G. Nelissen, and B. Brandenburg, “[Response-Time Analysis of Limited-Preemptive Parallel DAG Tasks under Global Scheduling](http://drops.dagstuhl.de/opus/volltexte/2019/10758/pdf/LIPIcs-ECRTS-2019-21.pdf)”, *Proceedings of the 31st Euromicro Conference on Real-Time Systems (ECRTS 2019)*, pp. 21:1–21:23, July 2019.
+- G. Nelissen, J. Marcè i Igual, and M. Nasri, “[Response-time analysis for non-preemptive periodic moldable gang tasks](http://dagstuhl.sunsite.rwth-aachen.de/volltexte/2022/16329/pdf/LIPIcs-ECRTS-2022-12.pdf)”, *Proceedings of the 34th Euromicro Conference on Real-Time Systems (ECRTS 2022)*, pp. 12:1–12:22, July 2022.
 - S. Srinivasan, M. Gunzel, and G. Nelissen, “[Response-Time Analysis of for Limited-Preemptive Self-Suspending and Event-Driven Delay-Induced Tasks]”, *Proceedings of the 45th IEEE Real-Time Systems Symposium (RTSS 2024)*, to appear.
 
 An [earlier version of this tool](https://github.com/brandenburg/np-schedulability-analysis/releases/tag/ECRTS18-last) (i.e., up to tag [`ECRTS18-last`](https://github.com/brandenburg/np-schedulability-analysis/releases/tag/ECRTS18-last)) implemented the analysis for independent jobs on globally scheduled multiprocessors presented at ECRTS'18.
@@ -13,7 +14,7 @@ An [earlier version of this tool](https://github.com/brandenburg/np-schedulabili
 *Proceedings of the 30th Euromicro Conference on Real-Time Systems (ECRTS 2018)*, pp. 9:1–9:23, July 2018.
 
 
-The uniprocessor analysis (Nasri & Brandenburg, 2017) is exact (at least in the absence of precedence constraints); the multiprocessor analyses (Nasri et al., 2018, 2019)(Srinivasa et al, 2024) are sufficient. 
+The uniprocessor analysis (Nasri & Brandenburg, 2017) is exact (at least in the absence of precedence constraints); the multiprocessor analyses (Nasri et al., 2018, 2019)(Nelissen et al., 2022)(Srinivasa et al, 2024) are sufficient. 
 
 ## Dependencies
 
@@ -101,7 +102,7 @@ The tool operates on CSV files with a fixed column order. There are three main i
 
 ### Job Sets
 
-Job set input CSV files describe a set of jobs, where each row specifies one job. The following columns are required.
+Job set input CSV files describe a set of jobs, where each row specifies one job. The following columns are required for sequential jobs (i.e, jobs that require a single processor to execute).
 
 1.   **Task ID** — an arbitrary numeric ID to identify the task to which a job belongs
 2.   **Job ID** — a unique numeric ID that identifies the job
@@ -109,6 +110,16 @@ Job set input CSV files describe a set of jobs, where each row specifies one job
 4.   **Release max** — the latest-possible release time of the job (equivalently, this is the arrival time plus maximum jitter of the job)
 5.   **Cost min** — the best-case execution time of the job (can be zero)
 6.   **Cost max** — the worst-case execution time of the job
+7.   **Deadline** — the absolute deadline of the job
+8.   **Priority** — the priority of the job (EDF: set it equal to the deadline)
+
+Gang jobs (i.e., jobs that may require more than one core to start executing) use the following format.
+
+1.   **Task ID** — an arbitrary numeric ID to identify the task to which a job belongs
+2.   **Job ID** — a unique numeric ID that identifies the job
+3.   **Release min** — the earliest-possible release time of the job (equivalently, this is the arrival time of the job)
+4.   **Release max** — the latest-possible release time of the job (equivalently, this is the arrival time plus maximum jitter of the job)
+5.   **Cost per parallelism** — a list mapping levels of parallelism to a minimum and maximum execution time. The list must follow the following format '{ paral:cost_min:cost_max; paral:cost_min:cost_max, ...}'
 7.   **Deadline** — the absolute deadline of the job
 8.   **Priority** — the priority of the job (EDF: set it equal to the deadline)
 

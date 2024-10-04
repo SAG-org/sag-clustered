@@ -74,12 +74,12 @@ namespace NP {
 	public:
 
 		Job(unsigned long id,
-			Interval<Time> arr, const Cost& exec_time,
+			Interval<Time> arr, const Cost& costs,
 			Time dl, Priority prio,
 			Job_index idx,
 			unsigned long tid = 0,
 			unsigned int affinity = 0)
-		: arrival(arr), exec_time(exec_time), parallelism(exec_time.begin()->first, exec_time.rbegin()->first),
+		: arrival(arr), exec_time(costs), parallelism(costs.begin()->first, costs.rbegin()->first),
 		  deadline(dl), priority(prio), id(id, tid), index(idx), affinity(affinity)
 		{
 			compute_hash();
@@ -143,6 +143,7 @@ namespace NP {
 				return cost->second.max();
 		}
 
+		// return the execution time bounds for a given level of parallelism
 		Interval<Time> get_cost(unsigned int ncores = 1) const
 		{
 			assert(ncores >= parallelism.min() && ncores <= parallelism.max());
@@ -153,7 +154,13 @@ namespace NP {
 				return cost->second;
 		}
 
-		int get_next_higher_parallelism(unsigned int ncores) const
+		// return all possible levels of parallelism and associated execution time bounds
+		const Cost& get_all_costs() const
+		{
+			return exec_time;
+		}
+
+		int get_next_parallelism(unsigned int ncores) const
 		{
 			assert(ncores < parallelism.max());
 			auto it = exec_time.upper_bound(ncores);
