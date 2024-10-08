@@ -184,7 +184,8 @@ namespace NP {
 				{
 					bool deadline_miss = false;
 					for (int i = 0; i < scheduled.size(); i++) {
-						deadline_miss = deadline_miss || scheduled[i]->exceeds_deadline(finish_range[i].upto());
+						if(scheduled[i] != NULL)
+							deadline_miss = deadline_miss || scheduled[i]->exceeds_deadline(finish_range[i].upto());
 					}
 					return deadline_miss;
 				}
@@ -1627,14 +1628,16 @@ namespace NP {
 						<< "N" << node_id[e.target]
 						<< "[label=\"";
 					for (int i = 0; i < e.scheduled.size(); ++i) {
-						out << "[T" << e.scheduled[i]->get_task_id()
-							<< " J" << e.scheduled[i]->get_job_id()
-							<< "\\nDL=" << e.scheduled[i]->get_deadline()
-							<< "\\nES=" << e.earliest_start_time(i)
-							<< "\\nLS=" << e.latest_start_time(i)
-							<< "\\nEF=" << e.earliest_finish_time(i)
-							<< "\\nLF=" << e.latest_finish_time(i)
-							<< "]\n";
+						if (e.scheduled[i] != NULL) {
+							out << "[T" << e.scheduled[i]->get_task_id()
+								<< " J" << e.scheduled[i]->get_job_id()
+								<< "\\nDL=" << e.scheduled[i]->get_deadline()
+								<< "\\nES=" << e.earliest_start_time(i)
+								<< "\\nLS=" << e.latest_start_time(i)
+								<< "\\nEF=" << e.earliest_finish_time(i)
+								<< "\\nLF=" << e.latest_finish_time(i)
+								<< "]\n";
+						}
 					}
 					out << "\"";
 					if (e.deadline_miss_possible()) {
