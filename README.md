@@ -1,11 +1,12 @@
 # NP Schedulability Test
 
-This repository contains the implementations of schedulability tests for **sets of non-preemptive moldable gang jobs** with **precedence constraints** and **self-suspension delays** scheduled on either **uniprocessor** or **globally scheduled identical multiprocessors**. The analyses are described in the following papers:
+This repository contains the implementations of schedulability tests for **sets of non-preemptive moldable gang jobs** with **precedence constraints** and **self-suspension delays** scheduled on **uniprocessor**, **partitioned multiprocessor**, **globally scheduled identical multiprocessors** or **heterogeneous clusters of processors**. The analyses are described in the following papers:
 
 - M. Nasri and B. Brandenburg, “[An Exact and Sustainable Analysis of Non-Preemptive Scheduling](https://people.mpi-sws.org/~bbb/papers/pdf/rtss17.pdf)”, *Proceedings of the 38th IEEE Real-Time Systems Symposium (RTSS 2017)*, pp. 12–23, December 2017.
 - M. Nasri, G. Nelissen, and B. Brandenburg, “[Response-Time Analysis of Limited-Preemptive Parallel DAG Tasks under Global Scheduling](http://drops.dagstuhl.de/opus/volltexte/2019/10758/pdf/LIPIcs-ECRTS-2019-21.pdf)”, *Proceedings of the 31st Euromicro Conference on Real-Time Systems (ECRTS 2019)*, pp. 21:1–21:23, July 2019.
 - G. Nelissen, J. Marcè i Igual, and M. Nasri, “[Response-time analysis for non-preemptive periodic moldable gang tasks](http://dagstuhl.sunsite.rwth-aachen.de/volltexte/2022/16329/pdf/LIPIcs-ECRTS-2022-12.pdf)”, *Proceedings of the 34th Euromicro Conference on Real-Time Systems (ECRTS 2022)*, pp. 12:1–12:22, July 2022.
-- S. Srinivasan, M. Gunzel, and G. Nelissen, “[Response-Time Analysis of for Limited-Preemptive Self-Suspending and Event-Driven Delay-Induced Tasks]”, *Proceedings of the 45th IEEE Real-Time Systems Symposium (RTSS 2024)*, to appear.
+- S. Srinivasan, M. Gunzel, and G. Nelissen, “[Response-Time Analysis for Limited-Preemptive Self-Suspending and Event-Driven Delay-Induced Tasks]()”, *Proceedings of the 45th IEEE Real-Time Systems Symposium (RTSS 2024)*, to appear.
+- G. Nelissen, “[Work-in-Progress: Response-Time Analysis of Partitioned and Clustered Systems with the Schedule-Abstraction Framework]()”, *Proceedings of the 45th IEEE Real-Time Systems Symposium (RTSS 2024)*, to appear.
 
 An [earlier version of this tool](https://github.com/brandenburg/np-schedulability-analysis/releases/tag/ECRTS18-last) (i.e., up to tag [`ECRTS18-last`](https://github.com/brandenburg/np-schedulability-analysis/releases/tag/ECRTS18-last)) implemented the analysis for independent jobs on globally scheduled multiprocessors presented at ECRTS'18.
 
@@ -120,8 +121,9 @@ Gang jobs (i.e., jobs that may require more than one core to start executing) us
 3.   **Release min** — the earliest-possible release time of the job (equivalently, this is the arrival time of the job)
 4.   **Release max** — the latest-possible release time of the job (equivalently, this is the arrival time plus maximum jitter of the job)
 5.   **Cost per parallelism** — a list mapping levels of parallelism to a minimum and maximum execution time. The list must follow the following format '{ paral:cost_min:cost_max; paral:cost_min:cost_max, ...}'
-7.   **Deadline** — the absolute deadline of the job
-8.   **Priority** — the priority of the job (EDF: set it equal to the deadline)
+7.   **Deadline** — the absolute deadline of the job.
+8.   **Priority** — the priority of the job (EDF: set it equal to the deadline).
+9.   [Optional] **Affinity** — the ID of the core or cluster of cores on which job is assigned to execute. If not specified, the job is mapped on cluster 0 by default.
 
 All numeric parameters can be 64-bit integers (preferred) or floating point values (slower, not recommended). 
 
@@ -153,6 +155,14 @@ A file containing abort actions lists for (some of) the jobs comprising a worklo
 6. **Maximum Cleanup Cost** - the maximum time required by the runtime system to abort the job
 
 An example abort actions file is provided in the `examples/` folder (e.g., [examples/abort.actions.csv](examples/abort.actions.csv)).
+
+### Execution platform description 
+
+A CSV file containing a basic description of the platform on which jobs execute. Each row represent a different cluster of cores. A single column is required:
+
+1. **Number of cores** - the number of identical cores in the cluster.
+
+Any number of clusters and combination of number of cores per cluster is allowed. However we identify the two following special cases; If all clusters contain a single core, then the system behaves like a fully partioned system. If there is a single row (single cluster) containing more than one core, then the system behaves like a globally scheduled multicore system (equivalent to using the `-m` option).
 
 ## Analyzing a Job Set
 
@@ -193,6 +203,15 @@ To run the analysis for globally scheduled multiprocessors, simply provide the n
 
 ```
 $ build/nptest -m 2 examples/fig1a.csv 
+examples/fig1a.csv,  1,  9,  9,  9,  1,  0.000379,  1760.000000,  0,  2
+```
+
+### Partitioned or Clustered Systems Analysis
+
+To run the analysis for partitioned multiprocessors or clustered systems, you must provide a specification of the platform using the `--platform` option followed by the appropriate CSC file. For example: 
+
+```
+$ build/nptest --platform examples/platform_desc.csv examples/fig1a.csv 
 examples/fig1a.csv,  1,  9,  9,  9,  1,  0.000379,  1760.000000,  0,  2
 ```
 
