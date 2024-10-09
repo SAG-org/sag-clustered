@@ -184,13 +184,6 @@ $ cat examples/fig1a.csv | grep -v '3, 9' | build/nptest
 -,  1,  8,  9,  8,  0,  0.000069,  816.000000,  0
 ```
 
-To activate an *idle-time insertion policy* (IIP, see paper for details), use the `-i` option. For example, to use the CW-EDF IIP, pass the `-i CW` option:
-
-```
-$ build/nptest -i CW examples/fig1a.csv 
-examples/fig1a.csv,  1,  9,  10,  9,  0,  0.000121,  848.000000,  0, 1
-```
-
 When analyzing a job set with **dense-time parameters** (i.e., time values specified as floating-point numbers), the option `-t dense` **must** be passed. 
 
 To use the multiprocessor analysis, use the `-m` option. 
